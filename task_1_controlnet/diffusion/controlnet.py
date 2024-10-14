@@ -59,7 +59,10 @@ def zero_convolution(
     # DO NOT change the code outside this part.
     # Return a zero-convolution layer,
     # with the weight & bias initialized as zeros.
-    module = None
+    # module = None
+    module = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+    nn.init.zeros_(module.weight)
+    nn.init.zeros_(module.bias)
     ######## TODO (1) ########
 
     return module
@@ -459,7 +462,15 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # DO NOT change the code outside this part.
         # Initialize 'controlnet' using the pretrained 'unet' model
         # NOTE: Modules to initialize: 'conv_in', 'time_proj', 'time_embedding', 'down_blocks', 'mid_block'
+        
+        controlnet.conv_in.load_state_dict(unet.conv_in.state_dict())
+        controlnet.time_proj.load_state_dict(unet.time_proj.state_dict())
+        controlnet.time_embedding.load_state_dict(unet.time_embedding.state_dict())
 
+        for controlnet_down_block, unet_down_block in zip(controlnet.down_blocks, unet.down_blocks):
+            controlnet_down_block.load_state_dict(unet_down_block.state_dict(), strict=False)
+
+        controlnet.mid_block.load_state_dict(unet.mid_block.state_dict(), strict=False)
         ######## TODO (2) ########
 
         return controlnet
@@ -745,9 +756,15 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # Apply zero-convolution to the residual features of each ControlNet block.
         # NOTE: Each 'controlnet_block' is used here.
 
-        down_block_res_samples = None
-        mid_block_res_sample = None
+        # down_block_res_samples = None
+        # mid_block_res_sample = None
+        
+        # Apply zero-convolution to the residual features of each ControlNet block.
+        down_block_res_samples = []
+        for down_block_res_sample, controlnet_block in zip(down_block_res_samples, self.controlnet_down_blocks):
+            down_block_res_samples.append(controlnet_block(down_block_res_sample))
 
+        mid_block_res_sample = self.controlnet_mid_block(sample)
         ######## TODO (3) ########
 
         # 6. scaling

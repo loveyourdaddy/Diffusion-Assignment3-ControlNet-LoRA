@@ -18,7 +18,7 @@ pillow==10.2.0
 psutil==6.0.0
 PyYAML==6.0.2
 regex==2024.7.24
-requests==2.28.1
+requests
 safetensors==0.4.4
 sentencepiece==0.1.97
 sympy==1.12

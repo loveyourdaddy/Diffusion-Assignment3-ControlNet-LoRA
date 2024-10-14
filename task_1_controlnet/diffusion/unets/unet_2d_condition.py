@@ -1234,8 +1234,14 @@ class UNet2DConditionModel(
         ######## TODO (4-1) ########
         # DO NOT change the code outside this part.
         # Add the residual features from the ControlNet block to 'down_block_res_samples'.
-        if is_controlnet:
-            pass
+        # if is_controlnet:
+        #     pass
+        
+        # if is_controlnet:
+        down_block_res_samples = list(down_block_res_samples)
+        for i in range(len(down_block_additional_residuals)):
+            down_block_res_samples[i] += down_block_additional_residuals[i]
+        down_block_res_samples = tuple(down_block_res_samples)
         ######## TODO (4-1) ########
 
         # 4. mid
@@ -1264,7 +1270,9 @@ class UNet2DConditionModel(
             ######## TODO (4-2) ########
             # DO NOT change the code outside this part.
             # Add the residual features from the ControlNet block to 'sample'.
-            pass
+            # pass
+
+            sample += mid_block_additional_residual
             ######## TODO (4-2) ########
 
         # 5. up
