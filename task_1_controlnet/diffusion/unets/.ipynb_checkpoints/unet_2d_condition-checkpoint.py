@@ -1234,16 +1234,11 @@ class UNet2DConditionModel(
         ######## TODO (4-1) ########
         # DO NOT change the code outside this part.
         # Add the residual features from the ControlNet block to 'down_block_res_samples'.
-        # if is_controlnet:
-        #     pass
-        
-        # import pdb; pdb.set_trace()
         if is_controlnet:
-            # down_block_res_samples = list(down_block_res_samples)
-            for i in range(len(down_block_additional_residuals)):
-                down_block_res_samples[i] += down_block_additional_residuals[i]
-            down_block_res_samples = tuple(down_block_res_samples)
-            
+            res_samples = ()
+            for down_samples, controlnet_samples in zip(down_block_res_samples, down_block_additional_residuals):
+                res_samples += (down_samples + controlnet_samples,)
+            down_block_res_samples = res_samples
         ######## TODO (4-1) ########
 
         # 4. mid
@@ -1272,23 +1267,15 @@ class UNet2DConditionModel(
             ######## TODO (4-2) ########
             # DO NOT change the code outside this part.
             # Add the residual features from the ControlNet block to 'sample'.
-            # pass
-
-            sample += mid_block_additional_residual
+            sample = sample + mid_block_additional_residual
             ######## TODO (4-2) ########
 
         # 5. up
-        print("self.up_blocks", len(self.up_blocks))
         for i, upsample_block in enumerate(self.up_blocks):
             is_final_block = i == len(self.up_blocks) - 1
 
-            # import pdb; pdb.set_trace()
-            print("down_block_res_samples:", len(down_block_res_samples))
-            print("len(upsample_block.resnets):", len(upsample_block.resnets))
-            
             res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
             down_block_res_samples = down_block_res_samples[: -len(upsample_block.resnets)]
-            # import pdb; pdb.set_trace()
 
             # if we have not reached the final block and need to forward the
             # upsample size, we do it here

@@ -59,8 +59,7 @@ def zero_convolution(
     # DO NOT change the code outside this part.
     # Return a zero-convolution layer,
     # with the weight & bias initialized as zeros.
-    # module = None
-    module = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+    module = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
     nn.init.zeros_(module.weight)
     nn.init.zeros_(module.bias)
     ######## TODO (1) ########
@@ -462,16 +461,11 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # DO NOT change the code outside this part.
         # Initialize 'controlnet' using the pretrained 'unet' model
         # NOTE: Modules to initialize: 'conv_in', 'time_proj', 'time_embedding', 'down_blocks', 'mid_block'
-        
         controlnet.conv_in.load_state_dict(unet.conv_in.state_dict())
         controlnet.time_proj.load_state_dict(unet.time_proj.state_dict())
         controlnet.time_embedding.load_state_dict(unet.time_embedding.state_dict())
-
-        for controlnet_down_block, unet_down_block in zip(controlnet.down_blocks, unet.down_blocks):
-            controlnet_down_block.load_state_dict(unet_down_block.state_dict(), strict=False)
-
-        controlnet.mid_block.load_state_dict(unet.mid_block.state_dict(), strict=False)
-        
+        controlnet.down_blocks.load_state_dict(unet.down_blocks.state_dict())
+        controlnet.mid_block.load_state_dict(unet.mid_block.state_dict())
         ######## TODO (2) ########
 
         return controlnet
@@ -756,19 +750,14 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalModelMixin):
         # DO NOT change the code outside this part.
         # Apply zero-convolution to the residual features of each ControlNet block.
         # NOTE: Each 'controlnet_block' is used here.
-
-        # down_block_res_samples = None
-        # mid_block_res_sample = None
         
-        # down block
-        controlnet_down_block_res_samples = []
-        for i, controlnet_block in enumerate(self.controlnet_down_blocks): # zip(down_block_res_samples
-            controlnet_down_block_res_samples.append(controlnet_block(down_block_res_samples[i]))
+        controlnet_down_block_res_samples = tuple()
+        for i, down_block in enumerate(self.controlnet_down_blocks):
+            controlnet_down_block_res_samples += (down_block(down_block_res_samples[i]),)
+        
         down_block_res_samples = controlnet_down_block_res_samples
-        
-        # mid  block
         mid_block_res_sample = self.controlnet_mid_block(sample)
-        
+
         ######## TODO (3) ########
 
         # 6. scaling
